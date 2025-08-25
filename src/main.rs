@@ -23,7 +23,10 @@ fn main() -> Result<(), eframe::Error> {
 struct MyApp {
     board: Vec<Vec<u8>>, 
     board_size: u8,
+    sub_grid_size: u8,
+
     grid_size_input: String,
+    grid_size_in: bool,
 }
 
 // Initializes the struct variables
@@ -34,7 +37,9 @@ impl Default for MyApp {
         Self {
             board: vec![vec![0; default_size]; default_size],
             board_size: default_size as u8,
+            sub_grid_size: default_size as u8 / 3,
             grid_size_input: String::new(),
+            grid_size_in: false,
         }
     }
 }
@@ -54,11 +59,6 @@ impl eframe::App for MyApp {
                     self.board = vec![vec![0; self.board_size as usize]; self.board_size as usize];  // Modify app state
                 }
 
-                // Draws the board
-                if ui.button("Draw Board").clicked() {
-                    draw_board();
-                }
-
                 // Takes grid size form user
                 ui.label("Enter grid size:");
                 ui.text_edit_singleline(&mut self.grid_size_input);
@@ -69,18 +69,48 @@ impl eframe::App for MyApp {
                             self.board_size = num;  
                             self.board = vec![vec![0; self.board_size as usize]; self.board_size as usize]; //Resizes the board 
                             self.grid_size_input.clear();
+                            self.grid_size_in = true;
                         }
                     }
                 }
 
+                
 
             });
+
+            // if size inputed draw grid 
+            if self.grid_size_in {
+                egui::Grid::new("sudoku_grid")
+                    .num_columns(self.board_size as usize)
+                    .spacing([2.0,2.0])
+                    .show(ui, |ui|{
+                        for row in 0..self.board_size + self.sub_grid_size{
+                            for col in 0..self.board_size + self.sub_grid_size{
+                                let cell_value = if self.board[row as usize][col as usize] == 0 {
+                                    " ".to_string()
+                                } else {
+                                    self.board[row as usize][col as usize].to_string()
+                                };
+
+                                //add button 
+                                if ui.button(&cell_value).clicked(){
+                                    self.board[row as usize][col as usize] += 1;
+                                }
+                                
+                            }
+                            ui.end_row();
+                        }
+                    });
+            } else {
+                ui.label("Please enter a grid size to start.");
+            }
+
 
 
         });
     }
 }
 
-fn draw_board(){
+fn draw_board(board_size: u8) {
     
 }
