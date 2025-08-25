@@ -1,3 +1,5 @@
+use std::{default, thread::sleep, vec};
+
 use eframe::egui;
 
 fn main() -> Result<(), eframe::Error> {
@@ -19,7 +21,7 @@ fn main() -> Result<(), eframe::Error> {
 
 // MyApp struct holds the application state
 struct MyApp {
-    board: [[u8; 9]; 9],
+    board: Vec<Vec<u8>>, 
     board_size: u8,
     grid_size_input: String,
 }
@@ -27,9 +29,11 @@ struct MyApp {
 // Initializes the struct variables
 impl Default for MyApp {
     fn default() -> Self {
+        // 9 by 9 default
+        let default_size: usize = 9;
         Self {
-            board: [[0; 9]; 9],
-            board_size: 9,
+            board: vec![vec![0; default_size]; default_size],
+            board_size: default_size as u8,
             grid_size_input: String::new(),
         }
     }
@@ -45,9 +49,9 @@ impl eframe::App for MyApp {
 
             //makes buttons horizontal
             ui.horizontal(|ui| {
-                // Reset board
+                // Reset board to 0
                 if ui.button("Reset").clicked() {
-                    self.board = [[0; 9]; 9];  // Modify app state
+                    self.board = vec![vec![0; self.board_size as usize]; self.board_size as usize];  // Modify app state
                 }
 
                 // Draws the board
@@ -58,10 +62,14 @@ impl eframe::App for MyApp {
                 // Takes grid size form user
                 ui.label("Enter grid size:");
                 ui.text_edit_singleline(&mut self.grid_size_input);
-
                 if ui.button("Submit").clicked() {
                     if let Ok(num) = self.grid_size_input.parse::<u8>() {
-                        self.board_size = num;
+                        //size limit 
+                        if num > 0 && num <= 30 {
+                            self.board_size = num;  
+                            self.board = vec![vec![0; self.board_size as usize]; self.board_size as usize]; //Resizes the board 
+                            self.grid_size_input.clear();
+                        }
                     }
                 }
 
