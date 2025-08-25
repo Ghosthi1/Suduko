@@ -20,6 +20,8 @@ fn main() -> Result<(), eframe::Error> {
 // MyApp struct holds the application state
 struct MyApp {
     board: [[u8; 9]; 9],
+    board_size: u8,
+    grid_size_input: String,
 }
 
 // Initializes the struct variables
@@ -27,6 +29,8 @@ impl Default for MyApp {
     fn default() -> Self {
         Self {
             board: [[0; 9]; 9],
+            board_size: 9,
+            grid_size_input: String::new(),
         }
     }
 }
@@ -38,16 +42,32 @@ impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // 1. Create panels/windows
         egui::CentralPanel::default().show(ctx, |ui| {
-            
-            // 2. Handle user input
-            if ui.button("Reset").clicked() {
-                self.board = [[0; 9]; 9];  // Modify app state
-            }
 
-            // Draws the board
-            if ui.button("Draw Board").clicked() {
-                draw_board();
-            }
+            //makes buttons horizontal
+            ui.horizontal(|ui| {
+                // Reset board
+                if ui.button("Reset").clicked() {
+                    self.board = [[0; 9]; 9];  // Modify app state
+                }
+
+                // Draws the board
+                if ui.button("Draw Board").clicked() {
+                    draw_board();
+                }
+
+                // Takes grid size form user
+                ui.label("Enter grid size:");
+                ui.text_edit_singleline(&mut self.grid_size_input);
+
+                if ui.button("Submit").clicked() {
+                    if let Ok(num) = self.grid_size_input.parse::<u8>() {
+                        self.board_size = num;
+                    }
+                }
+
+
+            });
+
 
         });
     }
