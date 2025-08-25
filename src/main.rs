@@ -37,7 +37,7 @@ impl Default for MyApp {
         Self {
             board: vec![vec![0; default_size]; default_size],
             board_size: default_size as u8,
-            sub_grid_size: default_size as u8 / 3,
+            sub_grid_size: (default_size as f32).sqrt() as u8,
             grid_size_input: String::new(),
             grid_size_in: false,
         }
@@ -66,16 +66,14 @@ impl eframe::App for MyApp {
                     if let Ok(num) = self.grid_size_input.parse::<u8>() {
                         //size limit 
                         if num > 0 && num <= 30 {
-                            self.board_size = num;  
+                            self.board_size = num;
+                            self.sub_grid_size = (num as f32).sqrt() as u8; 
                             self.board = vec![vec![0; self.board_size as usize]; self.board_size as usize]; //Resizes the board 
                             self.grid_size_input.clear();
                             self.grid_size_in = true;
                         }
                     }
                 }
-
-                
-
             });
 
             // if size inputed draw grid 
@@ -84,8 +82,8 @@ impl eframe::App for MyApp {
                     .num_columns(self.board_size as usize)
                     .spacing([2.0,2.0])
                     .show(ui, |ui|{
-                        for row in 0..self.board_size + self.sub_grid_size{
-                            for col in 0..self.board_size + self.sub_grid_size{
+                        for row in 0..self.board_size {
+                            for col in 0..self.board_size{
                                 let cell_value = if self.board[row as usize][col as usize] == 0 {
                                     " ".to_string()
                                 } else {
@@ -95,8 +93,16 @@ impl eframe::App for MyApp {
                                 //add button 
                                 if ui.button(&cell_value).clicked(){
                                     self.board[row as usize][col as usize] += 1;
+                                    // Add wrap-around to prevent numbers getting too large
+                                    if self.board[row as usize][col as usize] > self.board_size {
+                                        self.board[row as usize][col as usize] = 0;
+                                    }
                                 }
-                                
+
+                                // Add spacing for sub-grid boundaries
+                                if self.sub_grid_size > 0 && (col + 1) % self.sub_grid_size == 0 && col < self.board_size - 1 {
+                                    ui.separator();
+                                }
                             }
                             ui.end_row();
                         }
@@ -104,9 +110,6 @@ impl eframe::App for MyApp {
             } else {
                 ui.label("Please enter a grid size to start.");
             }
-
-
-
         });
     }
 }
