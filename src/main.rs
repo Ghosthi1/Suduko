@@ -25,7 +25,6 @@ struct MyApp {
     board_size: u8,
     sub_grid_size: u8,
 
-    grid_size_input: String,
     grid_size_in: bool,
 
     selected_grid_size: u8,
@@ -40,7 +39,6 @@ impl Default for MyApp {
             board: vec![vec![0; default_size]; default_size],
             board_size: default_size as u8,
             sub_grid_size: (default_size as f32).sqrt() as u8,
-            grid_size_input: String::new(),
             grid_size_in: false,
             selected_grid_size: default_size as u8,
         }
