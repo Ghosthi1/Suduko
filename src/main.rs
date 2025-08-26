@@ -1,4 +1,4 @@
-use std::{default, thread::sleep, vec};
+use std::{ vec};
 
 use eframe::egui;
 
@@ -64,13 +64,16 @@ impl eframe::App for MyApp {
                 ui.text_edit_singleline(&mut self.grid_size_input);
                 if ui.button("Submit").clicked() {
                     if let Ok(num) = self.grid_size_input.parse::<u8>() {
-                        //size limit 
-                        if num > 0 && num <= 30 {
+                        let sqrt_num = (num as f32).sqrt();
+                        // Check if it's a perfect square
+                        if num > 0 && num <= 25 && sqrt_num.fract() == 0.0 {
                             self.board_size = num;
-                            self.sub_grid_size = (num as f32).sqrt() as u8; 
-                            self.board = vec![vec![0; self.board_size as usize]; self.board_size as usize]; //Resizes the board 
+                            self.sub_grid_size = sqrt_num as u8;
+                            self.board = vec![vec![0; self.board_size as usize]; self.board_size as usize];
                             self.grid_size_input.clear();
                             self.grid_size_in = true;
+                        } else {
+                            
                         }
                     }
                 }
@@ -88,8 +91,8 @@ impl eframe::App for MyApp {
 
 fn draw_board(app: &mut MyApp, ui: &mut egui::Ui) {
     //calculates the sub grid amount of rows and colms
-    let sub_grid_per_side = app.board_size / app.sub_grid_size;
-
+    let sub_grid_per_side = app.board_size / app.sub_grid_size;  
+    
     // outer grid for sub grids
     egui::Grid::new("outer sudoku grid")
         .num_columns(sub_grid_per_side as usize)
