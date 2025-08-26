@@ -78,35 +78,54 @@ impl eframe::App for MyApp {
 
             // if size inputed draw grid 
             if self.grid_size_in {
-                egui::Grid::new("sudoku_grid")
-                    .num_columns(self.board_size as usize)
-                    .spacing([2.0,2.0])
-                    .show(ui, |ui|{
-                        for row in 0..self.board_size {
-                            for col in 0..self.board_size{
-                                let cell_value = if self.board[row as usize][col as usize] == 0 {
-                                    " ".to_string()
-                                } else {
-                                    self.board[row as usize][col as usize].to_string()
-                                };
+                //calculates the sub grid amount of rows and colms
+                let sub_grid_per_side = self.board_size / self.sub_grid_size;
 
-                                //add button 
-                                if ui.button(&cell_value).clicked(){
-                                    self.board[row as usize][col as usize] += 1;
-                                    // Add wrap-around to prevent numbers getting too large
-                                    if self.board[row as usize][col as usize] > self.board_size {
-                                        self.board[row as usize][col as usize] = 0;
-                                    }
-                                }
+                // outer grid for sub grids
+                egui::Grid::new("outer sudoku grid")
+                    .num_columns(sub_grid_per_side as usize)
+                    .spacing([8.0, 8.0]) // Spacing between sub-grids
+                    .show(ui, |ui| {
+                        for sub_row in 0..sub_grid_per_side {
+                            for sub_col in 0..sub_grid_per_side {
 
-                                // Add spacing for sub-grid boundaries
-                                if self.sub_grid_size > 0 && (col + 1) % self.sub_grid_size == 0 && col < self.board_size - 1 {
-                                    ui.separator();
-                                }
+                                //inner grid for indv cells
+                                egui::Grid::new(format!("sub grid {}, {}", sub_row, sub_col))
+                                    .num_columns(self.sub_grid_size as usize)
+                                    .spacing([1.0,1.0]) //small spacing
+                                    .show(ui, |ui|{
+                                        for cell_row in 0..self.sub_grid_size{
+                                            for cell_col in 0..self.sub_grid_size{
+                                                
+                                                //calculate actual board position
+                                                let actual_row = (sub_row * self.sub_grid_size + cell_row) as usize;
+                                                let actual_col = (sub_col * self.sub_grid_size + cell_col) as usize;
+
+                                                let cell_value = if self.board[actual_row][actual_col] == 0 {
+                                                    " ".to_string()
+                                                } else {
+                                                    self.board[actual_row][actual_col].to_string()
+                                                };
+
+                                                let button = egui::Button::new(&cell_value)
+                                                    .min_size(egui::vec2(35.0, 35.0));
+
+                                                if ui.add(button).clicked() {
+                                                    self.board[actual_row][actual_col] += 1;
+                                                    if self.board[actual_row][actual_col] > self.board_size {
+                                                        self.board[actual_row][actual_col] = 0;
+                                                    }
+                                                }
+
+                                            }
+                                            ui.end_row();
+                                        }
+                                    });
                             }
                             ui.end_row();
                         }
                     });
+
             } else {
                 ui.label("Please enter a grid size to start.");
             }
