@@ -27,6 +27,8 @@ struct MyApp {
 
     grid_size_input: String,
     grid_size_in: bool,
+
+    selected_grid_size: u8,
 }
 
 // Initializes the struct variables
@@ -40,6 +42,7 @@ impl Default for MyApp {
             sub_grid_size: (default_size as f32).sqrt() as u8,
             grid_size_input: String::new(),
             grid_size_in: false,
+            selected_grid_size: default_size as u8,
         }
     }
 }
@@ -59,24 +62,25 @@ impl eframe::App for MyApp {
                     self.board = vec![vec![0; self.board_size as usize]; self.board_size as usize];  // Modify app state
                 }
 
-                // Takes grid size form user
-                ui.label("Enter grid size:");
-                ui.text_edit_singleline(&mut self.grid_size_input);
-                if ui.button("Submit").clicked() {
-                    if let Ok(num) = self.grid_size_input.parse::<u8>() {
-                        let sqrt_num = (num as f32).sqrt();
-                        // Check if it's a perfect square
-                        if num > 0 && num <= 25 && sqrt_num.fract() == 0.0 {
-                            self.board_size = num;
-                            self.sub_grid_size = sqrt_num as u8;
-                            self.board = vec![vec![0; self.board_size as usize]; self.board_size as usize];
-                            self.grid_size_input.clear();
-                            self.grid_size_in = true;
-                        } else {
-                            
-                        }
-                    }
+                //dropdown for grid size selection
+                ui.label("Selected Grid Size:");
+
+                egui::ComboBox::from_label("")
+                    .selected_text(format!("{}x{}", self.selected_grid_size, self.selected_grid_size))
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut self.selected_grid_size, 4, "4x4");
+                        ui.selectable_value(&mut self.selected_grid_size, 9, "9x9");
+                        ui.selectable_value(&mut self.selected_grid_size, 16, "16x16");
+                        ui.selectable_value(&mut self.selected_grid_size, 25, "25x25");
+                    });
+
+                if ui.button("Create Grid").clicked() {
+                    self.board_size = self.selected_grid_size;
+                    self.sub_grid_size = (self.selected_grid_size as f32).sqrt() as u8;
+                    self.board = vec![vec![0; self.board_size as usize]; self.board_size as usize];
+                    self.grid_size_in = true;
                 }
+
             });
 
             // Call the draw_board function
