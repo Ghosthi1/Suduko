@@ -76,56 +76,9 @@ impl eframe::App for MyApp {
                 }
             });
 
-            // if size inputed draw grid 
+            // Call the draw_board function
             if self.grid_size_in {
-                //calculates the sub grid amount of rows and colms
-                let sub_grid_per_side = self.board_size / self.sub_grid_size;
-
-                // outer grid for sub grids
-                egui::Grid::new("outer sudoku grid")
-                    .num_columns(sub_grid_per_side as usize)
-                    .spacing([8.0, 8.0]) // Spacing between sub-grids
-                    .show(ui, |ui| {
-                        for sub_row in 0..sub_grid_per_side {
-                            for sub_col in 0..sub_grid_per_side {
-
-                                //inner grid for indv cells
-                                egui::Grid::new(format!("sub grid {}, {}", sub_row, sub_col))
-                                    .num_columns(self.sub_grid_size as usize)
-                                    .spacing([1.0,1.0]) //small spacing
-                                    .show(ui, |ui|{
-                                        for cell_row in 0..self.sub_grid_size{
-                                            for cell_col in 0..self.sub_grid_size{
-                                                
-                                                //calculate actual board position
-                                                let actual_row = (sub_row * self.sub_grid_size + cell_row) as usize;
-                                                let actual_col = (sub_col * self.sub_grid_size + cell_col) as usize;
-
-                                                let cell_value = if self.board[actual_row][actual_col] == 0 {
-                                                    " ".to_string()
-                                                } else {
-                                                    self.board[actual_row][actual_col].to_string()
-                                                };
-
-                                                let button = egui::Button::new(&cell_value)
-                                                    .min_size(egui::vec2(35.0, 35.0));
-
-                                                if ui.add(button).clicked() {
-                                                    self.board[actual_row][actual_col] += 1;
-                                                    if self.board[actual_row][actual_col] > self.board_size {
-                                                        self.board[actual_row][actual_col] = 0;
-                                                    }
-                                                }
-
-                                            }
-                                            ui.end_row();
-                                        }
-                                    });
-                            }
-                            ui.end_row();
-                        }
-                    });
-
+                draw_board(self, ui);
             } else {
                 ui.label("Please enter a grid size to start.");
             }
@@ -133,6 +86,53 @@ impl eframe::App for MyApp {
     }
 }
 
-fn draw_board(board_size: u8) {
-    
+fn draw_board(app: &mut MyApp, ui: &mut egui::Ui) {
+    //calculates the sub grid amount of rows and colms
+    let sub_grid_per_side = app.board_size / app.sub_grid_size;
+
+    // outer grid for sub grids
+    egui::Grid::new("outer sudoku grid")
+        .num_columns(sub_grid_per_side as usize)
+        .spacing([8.0, 8.0]) // Spacing between sub-grids
+        .show(ui, |ui| {
+            for sub_row in 0..sub_grid_per_side {
+                for sub_col in 0..sub_grid_per_side {
+
+                    //inner grid for indv cells
+                    egui::Grid::new(format!("sub grid {}, {}", sub_row, sub_col))
+                        .num_columns(app.sub_grid_size as usize)
+                        .spacing([1.0,1.0]) //small spacing
+                        .show(ui, |ui|{
+                            for cell_row in 0..app.sub_grid_size{
+                                for cell_col in 0..app.sub_grid_size{
+                                    
+                                    //calculate actual board position
+                                    let actual_row = (sub_row * app.sub_grid_size + cell_row) as usize;
+                                    let actual_col = (sub_col * app.sub_grid_size + cell_col) as usize;
+
+                                    let cell_value = if app.board[actual_row][actual_col] == 0 {
+                                        " ".to_string()
+                                    } else {
+                                        app.board[actual_row][actual_col].to_string()
+                                    };
+
+                                    let button = egui::Button::new(&cell_value)
+                                        .min_size(egui::vec2(35.0, 35.0));
+
+                                    if ui.add(button).clicked() {
+                                        app.board[actual_row][actual_col] += 1;
+                                        if app.board[actual_row][actual_col] > app.board_size {
+                                            app.board[actual_row][actual_col] = 0;
+                                        }
+                                    }
+
+                                }
+                                ui.end_row();
+                            }
+                        });
+                }
+                ui.end_row();
+            }
+        });
 }
+
