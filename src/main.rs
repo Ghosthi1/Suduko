@@ -87,6 +87,8 @@ impl eframe::App for MyApp {
             } else {
                 ui.label("Please enter a grid size to start.");
             }
+
+
         });
     }
 }
@@ -124,10 +126,18 @@ fn draw_board(app: &mut MyApp, ui: &mut egui::Ui) {
                                     let button = egui::Button::new(&cell_value)
                                         .min_size(egui::vec2(35.0, 35.0));
 
+                                    //when button presssed
                                     if ui.add(button).clicked() {
                                         app.board[actual_row][actual_col] += 1;
+
+                                        //loop back if bigger than grid
                                         if app.board[actual_row][actual_col] > app.board_size {
                                             app.board[actual_row][actual_col] = 0;
+                                        }
+
+                                        //check if valid
+                                        if !check_valid(&app.board, actual_row, actual_col, app.board_size, app.sub_grid_size) {
+                                            
                                         }
                                     }
 
@@ -141,3 +151,41 @@ fn draw_board(app: &mut MyApp, ui: &mut egui::Ui) {
         });
 }
 
+fn check_valid(board: &Vec<Vec<u8>>, row: usize, col: usize, boarder_size: u8, sub_grid_size: u8) -> bool{
+    let value = board[row][col];
+
+    // if empty it is valid
+    if value == 0 {
+        return true;
+    }
+
+    //checks rows for duplicates
+    for c in 0..boarder_size as usize{
+        if c != col && board[row][c] == value{
+            return false;
+        }
+    }
+
+    //checks col for duplocates
+    for r in 0..boarder_size as usize{
+        if r != row && board[r][col] == value{
+            return false;
+        }
+    }
+
+    //checks sub grid for duplicates 
+    // rounds towards zero and finds start of subgrid so 9x9 0,3,6
+    let sub_row_start = (row /sub_grid_size as usize) * sub_grid_size as usize;
+    let sub_col_start = (col/ sub_grid_size as usize) * sub_grid_size as usize;
+
+    for r in sub_row_start..sub_row_start + sub_grid_size as usize{
+        for c in sub_col_start..sub_col_start + sub_grid_size as usize{
+            if (r != row || c != col) && board[r][c] == value{
+                return  false;
+            }
+        }
+    }
+
+    true
+
+}
