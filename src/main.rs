@@ -1,13 +1,14 @@
 use std::{ vec};
 
 use eframe::egui;
+use egui::ViewportBuilder;
 
 fn main() -> Result<(), eframe::Error> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
     // Configure the native window options
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(750.0, 500.0)), // Set window size to 1000x1000 pixels
+        viewport: ViewportBuilder::default().with_inner_size([750.0, 500.0]),
         ..Default::default()
     };
 
@@ -15,7 +16,7 @@ fn main() -> Result<(), eframe::Error> {
     eframe::run_native(
         "Suduko",
         options,
-        Box::new(|_cc| Box::new(MyApp::default())), // _cc is the creation context, contains OpenGL context, etc.
+        Box::new(|_cc| Ok(Box::new(MyApp::default()))), // <-- wrap in Ok()
     )
 }
 
@@ -123,21 +124,22 @@ fn draw_board(app: &mut MyApp, ui: &mut egui::Ui) {
                                         app.board[actual_row][actual_col].to_string()
                                     };
 
-                                    let button = egui::Button::new(&cell_value)
-                                        .min_size(egui::vec2(35.0, 35.0));
+                                    //checks if valid
+                                    let is_valid = check_valid(&app.board, actual_row, actual_col, app.board_size, app.sub_grid_size);
 
-                                    //when button presssed
+                                    let button = egui::Button::new(
+                                        //xet text color
+                                        egui::RichText::new(&cell_value).color(egui::Color32::BLACK)
+                                        )
+                                        .min_size(egui::vec2(35.0, 35.0))
+                                        .fill(
+                                            if is_valid { egui::Color32::WHITE } 
+                                            else { egui::Color32::RED });
+
                                     if ui.add(button).clicked() {
                                         app.board[actual_row][actual_col] += 1;
-
-                                        //loop back if bigger than grid
                                         if app.board[actual_row][actual_col] > app.board_size {
                                             app.board[actual_row][actual_col] = 0;
-                                        }
-
-                                        //check if valid
-                                        if !check_valid(&app.board, actual_row, actual_col, app.board_size, app.sub_grid_size) {
-                                            
                                         }
                                     }
 
