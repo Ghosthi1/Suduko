@@ -8,7 +8,7 @@ fn main() -> Result<(), eframe::Error> {
 
     // Configure the native window options
     let options = eframe::NativeOptions {
-        viewport: ViewportBuilder::default().with_inner_size([750.0, 500.0]),
+        viewport: ViewportBuilder::default().with_inner_size([750.0, 750.0]),
         ..Default::default()
     };
 
@@ -25,10 +25,9 @@ struct MyApp {
     board: Vec<Vec<u8>>, 
     board_size: u8,
     sub_grid_size: u8,
-
     grid_size_in: bool,
-
     selected_grid_size: u8,
+    diff_num: u8,
 }
 
 // Initializes the struct variables
@@ -42,6 +41,7 @@ impl Default for MyApp {
             sub_grid_size: (default_size as f32).sqrt() as u8,
             grid_size_in: false,
             selected_grid_size: default_size as u8,
+            diff_num: 1,
         }
     }
 }
@@ -64,13 +64,23 @@ impl eframe::App for MyApp {
                 //dropdown for grid size selection
                 ui.label("Selected Grid Size:");
 
-                egui::ComboBox::from_label("")
+                egui::ComboBox::from_id_salt("grid_size_combo")
                     .selected_text(format!("{}x{}", self.selected_grid_size, self.selected_grid_size))
                     .show_ui(ui, |ui| {
                         ui.selectable_value(&mut self.selected_grid_size, 4, "4x4");
                         ui.selectable_value(&mut self.selected_grid_size, 9, "9x9");
                         ui.selectable_value(&mut self.selected_grid_size, 16, "16x16");
-                        ui.selectable_value(&mut self.selected_grid_size, 25, "25x25");
+                    });
+
+                //level select
+                ui.label("Select level");
+
+                egui::ComboBox::from_id_salt("difficulty_combo")
+                    .selected_text(format!("Difficulty: {}", self.diff_num))
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut self.diff_num, 1, "Easy");
+                        ui.selectable_value(&mut self.diff_num, 2, "Medium");
+                        ui.selectable_value(&mut self.diff_num, 3, "Hard");
                     });
 
                 if ui.button("Create Grid").clicked() {
