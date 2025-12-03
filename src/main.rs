@@ -23,11 +23,13 @@ fn main() -> Result<(), eframe::Error> {
 // MyApp struct holds the application state
 struct MyApp {
     board: Vec<Vec<u8>>, 
+    fixed_cells: Vec<Vec<bool>>,
     board_size: u8,
     sub_grid_size: u8,
     grid_size_in: bool,
     selected_grid_size: u8,
     diff_num: u8,
+    playing_diff_num: u8,
 }
 
 // Initializes the struct variables
@@ -37,11 +39,13 @@ impl Default for MyApp {
         let default_size: usize = 9;
         Self {
             board: vec![vec![0; default_size]; default_size],
+            fixed_cells: vec![vec![false; default_size]; default_size],
             board_size: default_size as u8,
             sub_grid_size: (default_size as f32).sqrt() as u8,
             grid_size_in: false,
             selected_grid_size: default_size as u8,
             diff_num: 1,
+            playing_diff_num: 1,
         }
     }
 }
@@ -59,6 +63,7 @@ impl eframe::App for MyApp {
                 // Reset board to 0
                 if ui.button("Reset").clicked() {
                     self.board = vec![vec![0; self.board_size as usize]; self.board_size as usize];  // Modify app state
+                    self.load_board(self.board_size, self.playing_diff_num);
                 }
 
                 //dropdown for grid size selection
@@ -86,16 +91,19 @@ impl eframe::App for MyApp {
                 if ui.button("Create Grid").clicked() {
                     self.board_size = self.selected_grid_size;
                     self.sub_grid_size = (self.selected_grid_size as f32).sqrt() as u8;
+                    self.playing_diff_num = self.diff_num;
                     self.board = vec![vec![0; self.board_size as usize]; self.board_size as usize];
                     self.grid_size_in = true;
-                    self.load_board();
+                    self.load_board(self.board_size, self.playing_diff_num);
                 }
 
             });
 
             // Call the draw_board function
             if self.grid_size_in {
-                draw_board(self, ui);
+                if draw_board(self, ui) {
+                    ui.label(egui::RichText::new("You Win!").color(egui::Color32::GREEN).size(20.0));
+                }
             } else {
                 ui.label("Please enter a grid size to start.");
             }
@@ -106,8 +114,8 @@ impl eframe::App for MyApp {
 }
 
 impl MyApp {
-    fn load_board(&mut self) {
-        match (self.selected_grid_size, self.diff_num) {
+    fn load_board(&mut self, size: u8, diff: u8) {
+        match (size, diff) {
             (4, 1) => {
                 self.board = vec![
                     vec![1, 0, 0, 4],
@@ -233,12 +241,22 @@ impl MyApp {
             }
             _ => {}
         }
+
+        self.fixed_cells = vec![vec![false; self.board_size as usize]; self.board_size as usize];
+        for r in 0..self.board_size as usize {
+            for c in 0..self.board_size as usize {
+                if self.board[r][c] != 0 {
+                    self.fixed_cells[r][c] = true;
+                }
+            }
+        }
     }
 }
 
-fn draw_board(app: &mut MyApp, ui: &mut egui::Ui) {
+fn draw_board(app: &mut MyApp, ui: &mut egui::Ui) -> bool {
     //calculates the sub grid amount of rows and colms
     let sub_grid_per_side = app.board_size / app.sub_grid_size;  
+    let mut is_solved = true;
     
     // outer grid for sub grids
     egui::Grid::new("outer sudoku grid")
@@ -268,6 +286,11 @@ fn draw_board(app: &mut MyApp, ui: &mut egui::Ui) {
 
                                     //checks if valid
                                     let is_valid = check_valid(&app.board, actual_row, actual_col, app.board_size, app.sub_grid_size);
+                                    let is_fixed = app.fixed_cells[actual_row][actual_col];
+
+                                    if app.board[actual_row][actual_col] == 0 || !is_valid {
+                                        is_solved = false;
+                                    }
 
                                     let button = egui::Button::new(
                                         //xet text color
@@ -275,10 +298,11 @@ fn draw_board(app: &mut MyApp, ui: &mut egui::Ui) {
                                         )
                                         .min_size(egui::vec2(35.0, 35.0))
                                         .fill(
-                                            if is_valid { egui::Color32::WHITE } 
-                                            else { egui::Color32::RED });
+                                            if !is_valid { egui::Color32::RED }
+                                            else if is_fixed { egui::Color32::LIGHT_GRAY } 
+                                            else { egui::Color32::WHITE });
 
-                                    if ui.add(button).clicked() {
+                                    if ui.add(button).clicked() && !is_fixed {
                                         app.board[actual_row][actual_col] += 1;
                                         if app.board[actual_row][actual_col] > app.board_size {
                                             app.board[actual_row][actual_col] = 0;
@@ -293,6 +317,7 @@ fn draw_board(app: &mut MyApp, ui: &mut egui::Ui) {
                 ui.end_row();
             }
         });
+    is_solved
 }
 
 fn check_valid(board: &Vec<Vec<u8>>, row: usize, col: usize, boarder_size: u8, sub_grid_size: u8) -> bool{
